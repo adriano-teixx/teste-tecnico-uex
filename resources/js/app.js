@@ -2,16 +2,10 @@ import './bootstrap';
 
 import Alpine from 'alpinejs';
 
-import {
-    createEmptyContactForm,
-    formatCpfValue,
-    formatPhoneValue,
-    formatCepValue,
-    validateCpfValue,
-    validatePhoneValue,
-} from './helpers/contact-form';
-
-import Swal from 'sweetalert2';
+import AlertService from './services/AlertService';
+import FormatterService from './services/FormatterService';
+import ContactApiService from './services/ContactApiService';
+import AddressService from './services/AddressService';
 
 window.Alpine = Alpine;
 
@@ -25,6 +19,11 @@ window.contactsManager = function () {
         maroto: 'Maroto Bagari',
     };
 
+    const alertService = new AlertService();
+    const formatter = new FormatterService();
+    const contactApi = new ContactApiService(csrfToken);
+    const addressService = new AddressService(csrfToken);
+
     return {
         csrfToken,
         googleMapsKey,
@@ -35,64 +34,52 @@ window.contactsManager = function () {
         addressSuggestions: [],
         contacts: [],
         editingId: null,
-        notice: '',
         errors: {},
-        form: createEmptyContactForm(),
+        form: formatter.createEmptyForm(),
         map: null,
         mapMarkers: [],
         mapError: '',
         selectedCoordinates: null,
         geocodeLoading: false,
+        alertService,
+        formatter,
+        contactApi,
+        addressService,
 
         normalizeCpf() {
-            this.form.cpf = formatCpfValue(this.form.cpf);
+            this.form.cpf = this.formatter.formatCpf(this.form.cpf);
         },
 
         handleCpfInput(event) {
-            const formatted = formatCpfValue(event.target.value);
+            const formatted = this.formatter.formatCpf(event.target.value);
             event.target.value = formatted;
             this.form.cpf = formatted;
         },
 
         isCpfValid(value) {
-            return validateCpfValue(value);
+            return this.formatter.validateCpf(value);
         },
 
         normalizePhone() {
-            this.form.phone = formatPhoneValue(this.form.phone);
+            this.form.phone = this.formatter.formatPhone(this.form.phone);
         },
 
         handlePhoneInput(event) {
-            const formatted = formatPhoneValue(event.target.value);
+            const formatted = this.formatter.formatPhone(event.target.value);
             event.target.value = formatted;
             this.form.phone = formatted;
         },
 
         isPhoneValid(value) {
-            return validatePhoneValue(value);
-        },
-
-        showAlert(type, text, title = null) {
-            const defaultTitles = {
-                success: 'Sucesso',
-                error: 'Erro',
-                info: 'Informação',
-            };
-
-            Swal.fire({
-                icon: type,
-                title: title ?? defaultTitles[type] ?? 'Aviso',
-                text,
-                confirmButtonText: 'Entendi',
-            });
+            return this.formatter.validatePhone(value);
         },
 
         normalizeCep() {
-            this.form.cep = formatCepValue(this.form.cep);
+            this.form.cep = this.formatter.formatCep(this.form.cep);
         },
 
         handleCepInput(event) {
-            const formatted = formatCepValue(event.target.value);
+            const formatted = this.formatter.formatCep(event.target.value);
             event.target.value = formatted;
             this.form.cep = formatted;
         },
@@ -104,45 +91,26 @@ window.contactsManager = function () {
             }
 
             this.geocodeLoading = true;
-            this.notice = '';
             this.selectedCoordinates = null;
 
-            const url = new URL('/addresses/geocode', window.location.origin);
-            url.searchParams.set('street', this.form.street);
-            url.searchParams.set('city', this.form.city);
-            url.searchParams.set('state', this.form.state);
-
-            if (this.form.district) {
-                url.searchParams.set('district', this.form.district);
-            }
-
-            if (this.form.number) {
-                url.searchParams.set('number', this.form.number);
-            }
-
             try {
-                const response = await fetch(url, {
-                    headers: {
-                        Accept: 'application/json',
-                        'X-CSRF-TOKEN': this.csrfToken,
-                    },
+                const coordinates = await this.addressService.geocode({
+                    street: this.form.street,
+                    city: this.form.city,
+                    state: this.form.state,
+                    district: this.form.district,
+                    number: this.form.number,
                 });
 
-                const payload = await response.json();
+                this.selectedCoordinates = coordinates;
 
-                if (!response.ok) {
-                    throw new Error(payload.message ?? 'Não foi possível obter as coordenadas do endereço.');
-                }
-
-                this.selectedCoordinates = payload.data ?? null;
-
-                if (this.selectedCoordinates) {
-                    this.showAlert('success', 'Coordenadas aproximadas carregadas.');
+                if (coordinates) {
+                    this.alertService.success('Coordenadas aproximadas carregadas.');
                 } else {
-                    this.showAlert('info', 'Nenhuma coordenada encontrada.');
+                    this.alertService.info('Nenhuma coordenada encontrada.');
                 }
             } catch (error) {
-                this.showAlert('error', error.message);
+                this.alertService.error(error.message);
             } finally {
                 this.geocodeLoading = false;
             }
@@ -294,31 +262,14 @@ window.contactsManager = function () {
 
         async fetchContacts() {
             this.loading = true;
-            this.notice = '';
-
-            const url = new URL('/contacts', window.location.origin);
-            if (this.search.trim() !== '') {
-                url.searchParams.set('search', this.search.trim());
-            }
 
             try {
-                const response = await fetch(url, {
-                    headers: {
-                        Accept: 'application/json',
-                        'X-CSRF-TOKEN': this.csrfToken,
-                    },
-                });
-
-                if (!response.ok) {
-                    throw new Error('Não foi possível carregar os contatos.');
-                }
-
-                const payload = await response.json();
-                const normalized = (payload.data ?? []).map((contact) => this.prepareContact(contact));
+                const payload = await this.contactApi.list(this.search);
+                const normalized = payload.map((contact) => this.prepareContact(contact));
                 this.contacts = normalized;
                 this.updateMapMarkers();
             } catch (error) {
-                this.showAlert('error', error.message);
+                this.alertService.error(error.message);
             } finally {
                 this.loading = false;
             }
@@ -327,55 +278,41 @@ window.contactsManager = function () {
         async submitForm() {
             this.loading = true;
             this.errors = {};
-            this.notice = '';
 
             this.normalizeCpf();
             this.normalizePhone();
             this.normalizeCep();
 
-            const method = this.editingId ? 'PUT' : 'POST';
-            const url = this.editingId ? `/contacts/${this.editingId}` : '/contacts';
-
             if (!this.isCpfValid(this.form.cpf)) {
                 this.errors = { cpf: ['CPF inválido.'] };
-                this.showAlert('error', 'CPF inválido.');
+                this.alertService.error('CPF inválido.');
                 this.loading = false;
                 return;
             }
 
             if (this.form.phone && !this.isPhoneValid(this.form.phone)) {
                 this.errors = { phone: ['Telefone inválido.'] };
-                this.showAlert('error', 'Telefone inválido.');
+                this.alertService.error('Telefone inválido.');
                 this.loading = false;
                 return;
             }
 
             try {
-                const response = await fetch(url, {
-                    method,
-                    headers: {
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': this.csrfToken,
-                    },
-                    body: JSON.stringify(this.form),
-                });
-
-                const payload = await response.json();
+                const response = await this.contactApi.save(this.form, this.editingId);
 
                 if (!response.ok) {
-                    this.errors = payload.errors ?? {};
-                    this.showAlert('error', payload.message ?? 'Não foi possível salvar o contato.');
+                    this.errors = response.payload.errors ?? {};
+                    this.alertService.error(response.payload.message ?? 'Não foi possível salvar o contato.');
                     return;
                 }
 
                 const message = this.editingId ? 'Contato atualizado.' : 'Contato cadastrado.';
-                this.showAlert('success', message);
+                this.alertService.success(message);
                 this.resetForm();
                 window.dispatchEvent(new CustomEvent('close-modal', { detail: 'contact-registration' }));
                 this.fetchContacts();
             } catch (error) {
-                this.showAlert('error', error.message);
+                this.alertService.error(error.message);
             } finally {
                 this.loading = false;
             }
@@ -386,8 +323,8 @@ window.contactsManager = function () {
             this.form = {
                 name: contact.name,
                 cpf: contact.cpf,
-                phone: formatPhoneValue(contact.phone ?? ''),
-                cep: formatCepValue(contact.address.cep ?? ''),
+                phone: this.formatter.formatPhone(contact.phone ?? ''),
+                cep: this.formatter.formatCep(contact.address.cep ?? ''),
                 street: contact.address.street ?? '',
                 number: contact.address.number ?? '',
                 complement: contact.address.complement ?? '',
@@ -410,7 +347,7 @@ window.contactsManager = function () {
         },
 
         resetForm() {
-            this.form = createEmptyContactForm();
+            this.form = this.formatter.createEmptyForm();
             this.editingId = null;
             this.addressSuggestions = [];
             this.errors = {};
@@ -428,7 +365,7 @@ window.contactsManager = function () {
 
             if (!this.form.state || !this.form.city || !this.form.street) {
                 this.addressSuggestions = [];
-                this.showAlert('error', 'Informe estado, cidade e rua para buscar as sugestões.');
+                this.alertService.error('Informe estado, cidade e rua para buscar as sugestões.');
                 return;
             }
 
@@ -436,33 +373,21 @@ window.contactsManager = function () {
             this.addressSuggestions = [];
             this.selectedCoordinates = null;
 
-            const url = new URL('/addresses', window.location.origin);
-            url.searchParams.set('uf', this.form.state.toUpperCase());
-            url.searchParams.set('city', this.form.city);
-            url.searchParams.set('street', this.form.street);
-
             try {
-                const response = await fetch(url, {
-                    headers: {
-                        Accept: 'application/json',
-                        'X-CSRF-TOKEN': this.csrfToken,
-                    },
+                const suggestions = await this.addressService.search({
+                    state: this.form.state,
+                    city: this.form.city,
+                    street: this.form.street,
                 });
 
-                if (!response.ok) {
-                    throw new Error('Não foi possível consultar o endereço.');
-                }
-
-                const payload = await response.json();
-                const suggestions = payload.data ?? [];
                 this.addressSuggestions = suggestions;
                 if (suggestions.length) {
-                    this.showAlert('success', 'Sugestões de endereço carregadas.');
+                    this.alertService.success('Sugestões de endereço carregadas.');
                 } else {
-                    this.showAlert('info', 'Nenhum endereço encontrado.');
+                    this.alertService.info('Nenhum endereço encontrado.');
                 }
             } catch (error) {
-                this.showAlert('error', error.message);
+                this.alertService.error(error.message);
             } finally {
                 this.addressLoading = false;
             }
@@ -472,49 +397,32 @@ window.contactsManager = function () {
             const cep = cepDigits ?? this.form.cep.replace(/\D/g, '');
 
             if (cep.length !== 8) {
-                this.showAlert('error', 'Informe um CEP válido.');
+                this.alertService.error('Informe um CEP válido.');
                 return;
             }
 
             this.addressLoading = true;
             this.addressSuggestions = [];
             this.selectedCoordinates = null;
-            this.notice = '';
-
-            const url = new URL('/addresses/cep', window.location.origin);
-            url.searchParams.set('cep', cep);
 
             try {
-                const response = await fetch(url, {
-                    headers: {
-                        Accept: 'application/json',
-                        'X-CSRF-TOKEN': this.csrfToken,
-                    },
-                });
-
-                const payload = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(payload.message ?? 'Não foi possível buscar o CEP informado.');
-                }
-
-                const address = payload.data ?? null;
+                const address = await this.addressService.findByCep(cep);
 
                 if (!address) {
-                    this.showAlert('error', 'CEP não encontrado.');
+                    this.alertService.error('CEP não encontrado.');
                     return;
                 }
 
-                this.form.cep = formatCepValue(address.cep ?? '');
+                this.form.cep = this.formatter.formatCep(address.cep ?? '');
                 this.form.street = address.street ?? this.form.street;
                 this.form.district = address.district ?? this.form.district;
                 this.form.city = address.city ?? this.form.city;
                 this.form.state = (address.state ?? this.form.state).toUpperCase();
 
-                this.showAlert('success', 'Endereço preenchido automaticamente.');
+                this.alertService.success('Endereço preenchido automaticamente.');
                 this.fetchAddressCoordinates();
             } catch (error) {
-                this.showAlert('error', error.message);
+                this.alertService.error(error.message);
             } finally {
                 this.addressLoading = false;
             }
@@ -536,22 +444,11 @@ window.contactsManager = function () {
             }
 
             try {
-                const response = await fetch(`/contacts/${contactId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        Accept: 'application/json',
-                        'X-CSRF-TOKEN': this.csrfToken,
-                    },
-                });
-
-                if (!response.ok) {
-                    throw new Error('Não foi possível excluir o contato.');
-                }
-
-                this.showAlert('success', 'Contato removido.');
+                await this.contactApi.delete(contactId);
+                this.alertService.success('Contato removido.');
                 this.fetchContacts();
             } catch (error) {
-                this.showAlert('error', error.message);
+                this.alertService.error(error.message);
             }
         },
     };
