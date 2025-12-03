@@ -4,6 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="google-maps-api-key" content="{{ config('services.google_maps.key') }}">
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
@@ -16,25 +17,21 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="antialiased">
-        <div class="md-background">
-            <div class="md-app-shell">
-                <div class="md-app-card">
-                    @include('layouts.navigation')
+    <body class="antialiased app-root">
+        <div class="app-viewport">
+            @include('layouts/navigation')
 
-                    @isset($header)
-                        <header class="md-app-subheader">
-                            <div>
-                                {{ $header }}
-                            </div>
-                        </header>
-                    @endisset
+            @isset($header)
+                <header class="md-app-subheader">
+                    <div>
+                        {{ $header }}
+                    </div>
+                </header>
+            @endisset
 
-                    <main class="md-app-main">
-                        {{ $slot }}
-                    </main>
-                </div>
-            </div>
+            <main class="app-content">
+                {{ $slot }}
+            </main>
         </div>
     </body>
 </html>

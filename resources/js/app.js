@@ -19,10 +19,19 @@ const createEmptyContactForm = () => ({
 
 window.contactsManager = function () {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+    const googleMapsKey = document.querySelector('meta[name="google-maps-api-key"]')?.content ?? '';
+    const contractLabels = {
+        hudsoft: 'HudSoft',
+        ag4: 'AG4',
+        beats: 'Beats',
+        maroto: 'Maroto Bagari',
+    };
 
     return {
         csrfToken,
+        googleMapsKey,
         search: '',
+        contractType: 'all',
         loading: false,
         addressLoading: false,
         addressSuggestions: [],
@@ -31,8 +40,151 @@ window.contactsManager = function () {
         notice: '',
         errors: {},
         form: createEmptyContactForm(),
+        map: null,
+        mapMarkers: [],
+        mapError: '',
 
         init() {
+            this.fetchContacts();
+            this.loadGoogleMaps();
+        },
+
+        loadGoogleMaps() {
+            if (!this.googleMapsKey) {
+                return;
+            }
+
+            if (window.google?.maps) {
+                this.initializeMap();
+                return;
+            }
+
+            if (document.getElementById('google-maps-sdk')) {
+                return;
+            }
+
+            window.initContactsDashboardMap = () => this.initializeMap();
+
+            const script = document.createElement('script');
+            script.id = 'google-maps-sdk';
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${this.googleMapsKey}&callback=initContactsDashboardMap`;
+            script.async = true;
+            script.defer = true;
+            script.onerror = () => {
+                this.mapError = 'Não foi possível carregar o Google Maps.';
+            };
+            document.head.appendChild(script);
+        },
+
+        initializeMap() {
+            if (this.map || !window.google?.maps) {
+                return;
+            }
+
+            const container = document.getElementById('contacts-map');
+
+            if (!container) {
+                this.mapError = 'Não foi possível inicializar o mapa.';
+                return;
+            }
+
+            this.mapError = '';
+            this.map = new google.maps.Map(container, {
+                center: { lat: -15.7801, lng: -47.9292 },
+                zoom: 4,
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false,
+            });
+
+            this.updateMapMarkers();
+        },
+
+        updateMapMarkers() {
+            if (!this.map) {
+                return;
+            }
+
+            this.mapMarkers.forEach((marker) => marker.setMap(null));
+            this.mapMarkers = [];
+
+            const bounds = new google.maps.LatLngBounds();
+            let hasMarkers = false;
+
+            const contacts = this.displayedContacts();
+
+            contacts.forEach((contact) => {
+                const lat = Number(contact.coordinates?.latitude);
+                const lng = Number(contact.coordinates?.longitude);
+
+                if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+                    return;
+                }
+
+                hasMarkers = true;
+
+                const marker = new google.maps.Marker({
+                    position: { lat, lng },
+                    map: this.map,
+                    title: contact.name,
+                });
+
+                this.mapMarkers.push(marker);
+                bounds.extend(marker.getPosition());
+            });
+
+            if (hasMarkers) {
+                this.map.fitBounds(bounds);
+
+                if (bounds.getNorthEast().equals(bounds.getSouthWest())) {
+                    this.map.setZoom(10);
+                }
+            }
+        },
+
+        resolveContractType(contact) {
+            const name = (contact.name ?? '').toLowerCase();
+
+            if (name.includes('beats')) {
+                return 'beats';
+            }
+
+            if (name.includes('maroto')) {
+                return 'maroto';
+            }
+
+            if (name.includes('ag4')) {
+                return 'ag4';
+            }
+
+            return 'hudsoft';
+        },
+
+        prepareContact(contact) {
+            const contractType = contact.contract_type ?? this.resolveContractType(contact);
+
+            return {
+                ...contact,
+                contract_type: contractType,
+                contract_label: contractLabels[contractType] ?? contractLabels.hudsoft,
+                subtitle: (contact.complement || 'Sem delimitações').trim(),
+            };
+        },
+
+        displayedContacts() {
+            if (this.contractType === 'all') {
+                return this.contacts;
+            }
+
+            return this.contacts.filter((contact) => contact.contract_type === this.contractType);
+        },
+
+        clearSearch() {
+            if (!this.search) {
+                return;
+            }
+
+            this.search = '';
             this.fetchContacts();
         },
 
@@ -58,7 +210,9 @@ window.contactsManager = function () {
                 }
 
                 const payload = await response.json();
-                this.contacts = payload.data ?? [];
+                const normalized = (payload.data ?? []).map((contact) => this.prepareContact(contact));
+                this.contacts = normalized;
+                this.updateMapMarkers();
             } catch (error) {
                 this.notice = error.message;
             } finally {
