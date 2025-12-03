@@ -43,6 +43,10 @@ window.contactsManager = function () {
         selectedCoordinates: null,
         geocodeLoading: false,
         mockLoading: false,
+        perPage: 10,
+        currentPage: 1,
+        totalPages: 1,
+        totalContacts: 0,
         alertService,
         formatter,
         contactApi,
@@ -255,16 +259,34 @@ window.contactsManager = function () {
             }
 
             this.search = '';
-            this.fetchContacts();
+            this.goToPage(1);
         },
 
-        async fetchContacts() {
+        goToPage(page) {
+            const normalizedCurrent = Math.max(1, this.currentPage);
+            const upperBound = Math.max(this.totalPages, normalizedCurrent);
+            const targetPage = Math.min(Math.max(page, 1), upperBound);
+
+            this.fetchContacts(targetPage);
+        },
+
+        async fetchContacts(page = this.currentPage) {
             this.loading = true;
+            this.clearActiveMarker();
+
+            this.currentPage = page;
 
             try {
-                const payload = await this.contactApi.list(this.search);
-                const normalized = payload.map((contact) => this.prepareContact(contact));
+                const payload = await this.contactApi.list({
+                    search: this.search,
+                    page: this.currentPage,
+                    perPage: this.perPage,
+                });
+                const normalized = (payload.data ?? []).map((contact) => this.prepareContact(contact));
                 this.contacts = normalized;
+                const meta = payload.meta ?? {};
+                this.totalPages = Math.max(meta.last_page ?? 1, 1);
+                this.totalContacts = meta.total ?? normalized.length;
             } catch (error) {
                 this.alertService.error(error.message);
             } finally {

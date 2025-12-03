@@ -3,11 +3,15 @@ export default class ContactApiService {
         this.csrfToken = csrfToken;
     }
 
-    async list(search) {
+    async list({ search = '', page = 1, perPage = 12 } = {}) {
         const url = new URL('/contacts', window.location.origin);
+
         if (search?.trim()) {
             url.searchParams.set('search', search.trim());
         }
+
+        url.searchParams.set('page', page);
+        url.searchParams.set('per_page', perPage);
 
         const response = await fetch(url, {
             headers: {
@@ -21,7 +25,7 @@ export default class ContactApiService {
         }
 
         const payload = await response.json();
-        return payload.data ?? [];
+        return payload;
     }
 
     async createMock() {

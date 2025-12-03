@@ -56,10 +56,10 @@
                             id="search-query"
                             type="text"
                             x-model="search"
-                            @keyup.enter="fetchContacts()"
+                            @keyup.enter.prevent="goToPage(1)"
                             placeholder="Conta, Unidade"
                         >
-                        <button type="button" class="btn-icon" @click="fetchContacts()" aria-label="Buscar">
+                        <button type="button" class="btn-icon" @click="goToPage(1)" aria-label="Buscar">
                             <span class="material-symbols-outlined">search</span>
                         </button>
                         <button
@@ -76,7 +76,8 @@
 
             <div class="contacts-panel__body">
                 <p class="notice" x-show="notice" x-text="notice"></p>
-                <div class="contacts-list" data-simplebar>
+                <div class="contacts-list-wrapper">
+                    <div class="contacts-list" data-simplebar>
                     <template x-if="loading">
                         <div class="list-empty">Carregando contatos...</div>
                     </template>
@@ -104,6 +105,29 @@
                             </div>
                         </article>
                     </template>
+                    </div>
+                    <div class="contacts-pagination" x-show="totalPages > 1">
+                        <button
+                            type="button"
+                            class="pagination-btn"
+                            :disabled="currentPage <= 1"
+                            x-on:click.prevent="goToPage(currentPage - 1)"
+                        >
+                            Anterior
+                        </button>
+                        <p>
+                            Página <strong x-text="currentPage"></strong>
+                            de <span x-text="totalPages"></span>
+                        </p>
+                        <button
+                            type="button"
+                            class="pagination-btn"
+                            :disabled="currentPage >= totalPages"
+                            x-on:click.prevent="goToPage(currentPage + 1)"
+                        >
+                            Próxima
+                        </button>
+                    </div>
                 </div>
             </div>
         </aside>
