@@ -7,6 +7,15 @@
             </div>
             <div class="dashboard-header__actions">
                 <span class="dashboard-tag">Últimos dados sincronizados</span>
+                @if (config('features.mock_contacts'))
+                    <x-secondary-button
+                        type="button"
+                        x-data=""
+                        x-on:click.prevent="window.dispatchEvent(new CustomEvent('create-mock-contact'))"
+                    >
+                        {{ __('Cadastrar contato mock') }}
+                    </x-secondary-button>
+                @endif
                 <x-primary-button
                     type="button"
                     x-data=""
@@ -22,6 +31,7 @@
         x-data="contactsManager()"
         x-init="init()"
         x-cloak
+        x-on:create-mock-contact.window="createMockContact()"
         class="dashboard-grid"
     >
         <aside class="contacts-panel">

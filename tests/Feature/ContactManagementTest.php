@@ -98,6 +98,37 @@ class ContactManagementTest extends TestCase
         $this->assertNull($contact->fresh());
     }
 
+    public function test_mock_contact_endpoint_creates_contact_when_enabled(): void
+    {
+        config(['features.mock_contacts' => true]);
+
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson('/contacts/mock');
+
+        $response->assertCreated()
+            ->assertJsonStructure(['data' => ['id', 'name', 'cpf']]);
+
+        $this->assertDatabaseCount('contacts', 1);
+        $this->assertEquals(1, $user->fresh()->contacts()->count());
+    }
+
+    public function test_mock_contact_endpoint_is_disabled_by_default(): void
+    {
+        config(['features.mock_contacts' => false]);
+
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson('/contacts/mock');
+
+        $response->assertNotFound();
+        $this->assertDatabaseCount('contacts', 0);
+    }
+
     public function test_address_search_uses_viacep(): void
     {
         Http::fake([

@@ -41,6 +41,7 @@ window.contactsManager = function () {
         mapError: '',
         selectedCoordinates: null,
         geocodeLoading: false,
+        mockLoading: false,
         alertService,
         formatter,
         contactApi,
@@ -272,6 +273,24 @@ window.contactsManager = function () {
                 this.alertService.error(error.message);
             } finally {
                 this.loading = false;
+            }
+        },
+
+        async createMockContact() {
+            if (this.mockLoading) {
+                return;
+            }
+
+            this.mockLoading = true;
+
+            try {
+                await this.contactApi.createMock();
+                this.alertService.success('Contato mock cadastrado.');
+                await this.fetchContacts();
+            } catch (error) {
+                this.alertService.error(error.message);
+            } finally {
+                this.mockLoading = false;
             }
         },
 

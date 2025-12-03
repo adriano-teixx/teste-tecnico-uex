@@ -17,6 +17,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('contacts')->name('contacts.')->group(function () {
         Route::get('/', [ContactController::class, 'index']);
         Route::post('/', [ContactController::class, 'store']);
+        Route::post('mock', [ContactController::class, 'mock'])->name('mock');
         Route::get('{contact}', [ContactController::class, 'show']);
         Route::put('{contact}', [ContactController::class, 'update']);
         Route::delete('{contact}', [ContactController::class, 'destroy']);

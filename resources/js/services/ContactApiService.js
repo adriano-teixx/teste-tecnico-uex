@@ -24,6 +24,24 @@ export default class ContactApiService {
         return payload.data ?? [];
     }
 
+    async createMock() {
+        const response = await fetch('/contacts/mock', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': this.csrfToken,
+            },
+        });
+
+        const payload = await response.json();
+
+        if (!response.ok) {
+            throw new Error(payload?.message ?? 'Não foi possível cadastrar contato mock.');
+        }
+
+        return payload.data ?? null;
+    }
+
     async save(contact, editingId) {
         const url = editingId ? `/contacts/${editingId}` : '/contacts';
         const method = editingId ? 'PUT' : 'POST';

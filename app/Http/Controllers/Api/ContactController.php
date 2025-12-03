@@ -55,6 +55,21 @@ class ContactController extends Controller
     }
 
     /**
+     * Create a mock contact for the authenticated user.
+     */
+    public function mock(Request $request): JsonResponse
+    {
+        abort_unless(config('features.mock_contacts'), 404);
+
+        $contact = Contact::factory()
+            ->for($request->user())
+            ->brazilianCoordinates()
+            ->create();
+
+        return (new ContactResource($contact))->response()->setStatusCode(201);
+    }
+
+    /**
      * Show a single contact.
      */
     public function show(Request $request, Contact $contact): JsonResponse
