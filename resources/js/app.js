@@ -37,7 +37,8 @@ window.contactsManager = function () {
         errors: {},
         form: formatter.createEmptyForm(),
         map: null,
-        mapMarkers: [],
+        activeMarker: null,
+        activeContactId: null,
         mapError: '',
         selectedCoordinates: null,
         geocodeLoading: false,
@@ -170,49 +171,6 @@ window.contactsManager = function () {
                 fullscreenControl: false,
             });
 
-            this.updateMapMarkers();
-        },
-
-        updateMapMarkers() {
-            if (!this.map) {
-                return;
-            }
-
-            this.mapMarkers.forEach((marker) => marker.setMap(null));
-            this.mapMarkers = [];
-
-            const bounds = new google.maps.LatLngBounds();
-            let hasMarkers = false;
-
-            const contacts = this.displayedContacts();
-
-            contacts.forEach((contact) => {
-                const lat = Number(contact.coordinates?.latitude);
-                const lng = Number(contact.coordinates?.longitude);
-
-                if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-                    return;
-                }
-
-                hasMarkers = true;
-
-                const marker = new google.maps.Marker({
-                    position: { lat, lng },
-                    map: this.map,
-                    title: contact.name,
-                });
-
-                this.mapMarkers.push(marker);
-                bounds.extend(marker.getPosition());
-            });
-
-            if (hasMarkers) {
-                this.map.fitBounds(bounds);
-
-                if (bounds.getNorthEast().equals(bounds.getSouthWest())) {
-                    this.map.setZoom(10);
-                }
-            }
         },
 
         resolveContractType(contact) {
@@ -231,6 +189,45 @@ window.contactsManager = function () {
             }
 
             return 'hudsoft';
+        },
+
+        focusContact(contact) {
+            if (!this.map) {
+                this.alertService.error('O mapa ainda não está disponível.');
+                return;
+            }
+
+            const lat = Number(contact.coordinates?.latitude);
+            const lng = Number(contact.coordinates?.longitude);
+
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+                this.alertService.info('Coordenadas deste contato não estão disponíveis.');
+                return;
+            }
+
+            this.clearActiveMarker();
+
+            const position = { lat, lng };
+
+            this.activeMarker = new google.maps.Marker({
+                position,
+                map: this.map,
+                title: contact.name,
+            });
+
+            this.map.panTo(position);
+            this.map.setZoom(Math.max(this.map.getZoom(), 12));
+            this.activeContactId = contact.id;
+        },
+
+        clearActiveMarker() {
+            if (!this.activeMarker) {
+                return;
+            }
+
+            this.activeMarker.setMap(null);
+            this.activeMarker = null;
+            this.activeContactId = null;
         },
 
         prepareContact(contact) {
@@ -268,7 +265,6 @@ window.contactsManager = function () {
                 const payload = await this.contactApi.list(this.search);
                 const normalized = payload.map((contact) => this.prepareContact(contact));
                 this.contacts = normalized;
-                this.updateMapMarkers();
             } catch (error) {
                 this.alertService.error(error.message);
             } finally {

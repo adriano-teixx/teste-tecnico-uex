@@ -84,7 +84,13 @@
                         <div class="list-empty">Nenhum contato encontrado.</div>
                     </template>
                     <template x-for="contact in displayedContacts()" :key="contact.id">
-                        <article class="contact-entry">
+                        <article
+                            class="contact-entry"
+                            tabindex="0"
+                            role="button"
+                            x-on:click="focusContact(contact)"
+                            x-on:keydown.enter.prevent="focusContact(contact)"
+                        >
                             <div class="contact-avatar">
                                 <span x-text="contact.name.charAt(0)"></span>
                             </div>
