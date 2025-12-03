@@ -56,7 +56,7 @@
                             id="search-query"
                             type="text"
                             x-model="search"
-                            @keyup.enter.prevent="goToPage(1)"
+                            x-on:input.debounce.500="goToPage(1)"
                             placeholder="Conta, Unidade"
                         >
                         <button type="button" class="btn-icon" @click="goToPage(1)" aria-label="Buscar">
