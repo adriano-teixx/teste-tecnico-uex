@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'google_maps' => [
+        'key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
+    'viacep' => [
+        'base_url' => env('VIACEP_BASE_URL', 'https://viacep.com.br/ws'),
+    ],
+
 ];
