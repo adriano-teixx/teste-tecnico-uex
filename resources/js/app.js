@@ -11,6 +11,8 @@ import {
     validatePhoneValue,
 } from './helpers/contact-form';
 
+import Swal from 'sweetalert2';
+
 window.Alpine = Alpine;
 
 window.contactsManager = function () {
@@ -70,6 +72,21 @@ window.contactsManager = function () {
             return validatePhoneValue(value);
         },
 
+        showAlert(type, text, title = null) {
+            const defaultTitles = {
+                success: 'Sucesso',
+                error: 'Erro',
+                info: 'Informação',
+            };
+
+            Swal.fire({
+                icon: type,
+                title: title ?? defaultTitles[type] ?? 'Aviso',
+                text,
+                confirmButtonText: 'Entendi',
+            });
+        },
+
         normalizeCep() {
             this.form.cep = formatCepValue(this.form.cep);
         },
@@ -118,11 +135,14 @@ window.contactsManager = function () {
                 }
 
                 this.selectedCoordinates = payload.data ?? null;
-                this.notice = this.selectedCoordinates
-                    ? 'Coordenadas aproximadas carregadas.'
-                    : 'Nenhuma coordenada encontrada.';
+
+                if (this.selectedCoordinates) {
+                    this.showAlert('success', 'Coordenadas aproximadas carregadas.');
+                } else {
+                    this.showAlert('info', 'Nenhuma coordenada encontrada.');
+                }
             } catch (error) {
-                this.notice = error.message;
+                this.showAlert('error', error.message);
             } finally {
                 this.geocodeLoading = false;
             }
@@ -298,7 +318,7 @@ window.contactsManager = function () {
                 this.contacts = normalized;
                 this.updateMapMarkers();
             } catch (error) {
-                this.notice = error.message;
+                this.showAlert('error', error.message);
             } finally {
                 this.loading = false;
             }
@@ -318,14 +338,14 @@ window.contactsManager = function () {
 
             if (!this.isCpfValid(this.form.cpf)) {
                 this.errors = { cpf: ['CPF inválido.'] };
-                this.notice = 'CPF inválido.';
+                this.showAlert('error', 'CPF inválido.');
                 this.loading = false;
                 return;
             }
 
             if (this.form.phone && !this.isPhoneValid(this.form.phone)) {
                 this.errors = { phone: ['Telefone inválido.'] };
-                this.notice = 'Telefone inválido.';
+                this.showAlert('error', 'Telefone inválido.');
                 this.loading = false;
                 return;
             }
@@ -345,16 +365,17 @@ window.contactsManager = function () {
 
                 if (!response.ok) {
                     this.errors = payload.errors ?? {};
-                    this.notice = payload.message ?? 'Não foi possível salvar o contato.';
+                    this.showAlert('error', payload.message ?? 'Não foi possível salvar o contato.');
                     return;
                 }
 
-                this.notice = this.editingId ? 'Contato atualizado.' : 'Contato cadastrado.';
+                const message = this.editingId ? 'Contato atualizado.' : 'Contato cadastrado.';
+                this.showAlert('success', message);
                 this.resetForm();
                 window.dispatchEvent(new CustomEvent('close-modal', { detail: 'contact-registration' }));
                 this.fetchContacts();
             } catch (error) {
-                this.notice = error.message;
+                this.showAlert('error', error.message);
             } finally {
                 this.loading = false;
             }
@@ -406,8 +427,8 @@ window.contactsManager = function () {
             }
 
             if (!this.form.state || !this.form.city || !this.form.street) {
-                this.notice = 'Informe estado, cidade e rua para buscar as sugestões.';
                 this.addressSuggestions = [];
+                this.showAlert('error', 'Informe estado, cidade e rua para buscar as sugestões.');
                 return;
             }
 
@@ -435,9 +456,13 @@ window.contactsManager = function () {
                 const payload = await response.json();
                 const suggestions = payload.data ?? [];
                 this.addressSuggestions = suggestions;
-                this.notice = suggestions.length ? 'Sugestões de endereço carregadas.' : 'Nenhum endereço encontrado.';
+                if (suggestions.length) {
+                    this.showAlert('success', 'Sugestões de endereço carregadas.');
+                } else {
+                    this.showAlert('info', 'Nenhum endereço encontrado.');
+                }
             } catch (error) {
-                this.notice = error.message;
+                this.showAlert('error', error.message);
             } finally {
                 this.addressLoading = false;
             }
@@ -447,7 +472,7 @@ window.contactsManager = function () {
             const cep = cepDigits ?? this.form.cep.replace(/\D/g, '');
 
             if (cep.length !== 8) {
-                this.notice = 'Informe um CEP válido.';
+                this.showAlert('error', 'Informe um CEP válido.');
                 return;
             }
 
@@ -476,7 +501,7 @@ window.contactsManager = function () {
                 const address = payload.data ?? null;
 
                 if (!address) {
-                    this.notice = 'CEP não encontrado.';
+                    this.showAlert('error', 'CEP não encontrado.');
                     return;
                 }
 
@@ -486,10 +511,10 @@ window.contactsManager = function () {
                 this.form.city = address.city ?? this.form.city;
                 this.form.state = (address.state ?? this.form.state).toUpperCase();
 
-                this.notice = 'Endereço preenchido automaticamente.';
+                this.showAlert('success', 'Endereço preenchido automaticamente.');
                 this.fetchAddressCoordinates();
             } catch (error) {
-                this.notice = error.message;
+                this.showAlert('error', error.message);
             } finally {
                 this.addressLoading = false;
             }
@@ -523,10 +548,10 @@ window.contactsManager = function () {
                     throw new Error('Não foi possível excluir o contato.');
                 }
 
-                this.notice = 'Contato removido.';
+                this.showAlert('success', 'Contato removido.');
                 this.fetchContacts();
             } catch (error) {
-                this.notice = error.message;
+                this.showAlert('error', error.message);
             }
         },
     };
