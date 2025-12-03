@@ -2,20 +2,16 @@ import './bootstrap';
 
 import Alpine from 'alpinejs';
 
-window.Alpine = Alpine;
+import {
+    createEmptyContactForm,
+    formatCpfValue,
+    formatPhoneValue,
+    formatCepValue,
+    validateCpfValue,
+    validatePhoneValue,
+} from './helpers/contact-form';
 
-const createEmptyContactForm = () => ({
-    name: '',
-    cpf: '',
-    phone: '',
-    cep: '',
-    street: '',
-    number: '',
-    complement: '',
-    district: '',
-    city: '',
-    state: '',
-});
+window.Alpine = Alpine;
 
 window.contactsManager = function () {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
@@ -43,6 +39,94 @@ window.contactsManager = function () {
         map: null,
         mapMarkers: [],
         mapError: '',
+        selectedCoordinates: null,
+        geocodeLoading: false,
+
+        normalizeCpf() {
+            this.form.cpf = formatCpfValue(this.form.cpf);
+        },
+
+        handleCpfInput(event) {
+            const formatted = formatCpfValue(event.target.value);
+            event.target.value = formatted;
+            this.form.cpf = formatted;
+        },
+
+        isCpfValid(value) {
+            return validateCpfValue(value);
+        },
+
+        normalizePhone() {
+            this.form.phone = formatPhoneValue(this.form.phone);
+        },
+
+        handlePhoneInput(event) {
+            const formatted = formatPhoneValue(event.target.value);
+            event.target.value = formatted;
+            this.form.phone = formatted;
+        },
+
+        isPhoneValid(value) {
+            return validatePhoneValue(value);
+        },
+
+        normalizeCep() {
+            this.form.cep = formatCepValue(this.form.cep);
+        },
+
+        handleCepInput(event) {
+            const formatted = formatCepValue(event.target.value);
+            event.target.value = formatted;
+            this.form.cep = formatted;
+        },
+
+        async fetchAddressCoordinates() {
+            if (!this.form.street || !this.form.city || !this.form.state) {
+                this.selectedCoordinates = null;
+                return;
+            }
+
+            this.geocodeLoading = true;
+            this.notice = '';
+            this.selectedCoordinates = null;
+
+            const url = new URL('/addresses/geocode', window.location.origin);
+            url.searchParams.set('street', this.form.street);
+            url.searchParams.set('city', this.form.city);
+            url.searchParams.set('state', this.form.state);
+
+            if (this.form.district) {
+                url.searchParams.set('district', this.form.district);
+            }
+
+            if (this.form.number) {
+                url.searchParams.set('number', this.form.number);
+            }
+
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN': this.csrfToken,
+                    },
+                });
+
+                const payload = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(payload.message ?? 'Não foi possível obter as coordenadas do endereço.');
+                }
+
+                this.selectedCoordinates = payload.data ?? null;
+                this.notice = this.selectedCoordinates
+                    ? 'Coordenadas aproximadas carregadas.'
+                    : 'Nenhuma coordenada encontrada.';
+            } catch (error) {
+                this.notice = error.message;
+            } finally {
+                this.geocodeLoading = false;
+            }
+        },
 
         init() {
             this.fetchContacts();
@@ -225,8 +309,26 @@ window.contactsManager = function () {
             this.errors = {};
             this.notice = '';
 
+            this.normalizeCpf();
+            this.normalizePhone();
+            this.normalizeCep();
+
             const method = this.editingId ? 'PUT' : 'POST';
             const url = this.editingId ? `/contacts/${this.editingId}` : '/contacts';
+
+            if (!this.isCpfValid(this.form.cpf)) {
+                this.errors = { cpf: ['CPF inválido.'] };
+                this.notice = 'CPF inválido.';
+                this.loading = false;
+                return;
+            }
+
+            if (this.form.phone && !this.isPhoneValid(this.form.phone)) {
+                this.errors = { phone: ['Telefone inválido.'] };
+                this.notice = 'Telefone inválido.';
+                this.loading = false;
+                return;
+            }
 
             try {
                 const response = await fetch(url, {
@@ -249,6 +351,7 @@ window.contactsManager = function () {
 
                 this.notice = this.editingId ? 'Contato atualizado.' : 'Contato cadastrado.';
                 this.resetForm();
+                window.dispatchEvent(new CustomEvent('close-modal', { detail: 'contact-registration' }));
                 this.fetchContacts();
             } catch (error) {
                 this.notice = error.message;
@@ -262,8 +365,8 @@ window.contactsManager = function () {
             this.form = {
                 name: contact.name,
                 cpf: contact.cpf,
-                phone: contact.phone,
-                cep: contact.address.cep ?? '',
+                phone: formatPhoneValue(contact.phone ?? ''),
+                cep: formatCepValue(contact.address.cep ?? ''),
                 street: contact.address.street ?? '',
                 number: contact.address.number ?? '',
                 complement: contact.address.complement ?? '',
@@ -272,6 +375,13 @@ window.contactsManager = function () {
                 state: (contact.address.state ?? '').toUpperCase(),
             };
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            this.selectedCoordinates =
+                contact.coordinates?.latitude && contact.coordinates?.longitude
+                    ? {
+                          latitude: contact.coordinates.latitude,
+                          longitude: contact.coordinates.longitude,
+                      }
+                    : null;
         },
 
         cancelEditing() {
@@ -283,16 +393,27 @@ window.contactsManager = function () {
             this.editingId = null;
             this.addressSuggestions = [];
             this.errors = {};
+            this.selectedCoordinates = null;
+            this.geocodeLoading = false;
         },
 
         async lookupAddress() {
+            const cepDigits = this.form.cep.replace(/\D/g, '');
+
+            if (cepDigits.length === 8) {
+                await this.lookupAddressByCep(cepDigits);
+                return;
+            }
+
             if (!this.form.state || !this.form.city || !this.form.street) {
+                this.notice = 'Informe estado, cidade e rua para buscar as sugestões.';
                 this.addressSuggestions = [];
                 return;
             }
 
             this.addressLoading = true;
             this.addressSuggestions = [];
+            this.selectedCoordinates = null;
 
             const url = new URL('/addresses', window.location.origin);
             url.searchParams.set('uf', this.form.state.toUpperCase());
@@ -312,7 +433,61 @@ window.contactsManager = function () {
                 }
 
                 const payload = await response.json();
-                this.addressSuggestions = payload.data ?? [];
+                const suggestions = payload.data ?? [];
+                this.addressSuggestions = suggestions;
+                this.notice = suggestions.length ? 'Sugestões de endereço carregadas.' : 'Nenhum endereço encontrado.';
+            } catch (error) {
+                this.notice = error.message;
+            } finally {
+                this.addressLoading = false;
+            }
+        },
+
+        async lookupAddressByCep(cepDigits = null) {
+            const cep = cepDigits ?? this.form.cep.replace(/\D/g, '');
+
+            if (cep.length !== 8) {
+                this.notice = 'Informe um CEP válido.';
+                return;
+            }
+
+            this.addressLoading = true;
+            this.addressSuggestions = [];
+            this.selectedCoordinates = null;
+            this.notice = '';
+
+            const url = new URL('/addresses/cep', window.location.origin);
+            url.searchParams.set('cep', cep);
+
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN': this.csrfToken,
+                    },
+                });
+
+                const payload = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(payload.message ?? 'Não foi possível buscar o CEP informado.');
+                }
+
+                const address = payload.data ?? null;
+
+                if (!address) {
+                    this.notice = 'CEP não encontrado.';
+                    return;
+                }
+
+                this.form.cep = formatCepValue(address.cep ?? '');
+                this.form.street = address.street ?? this.form.street;
+                this.form.district = address.district ?? this.form.district;
+                this.form.city = address.city ?? this.form.city;
+                this.form.state = (address.state ?? this.form.state).toUpperCase();
+
+                this.notice = 'Endereço preenchido automaticamente.';
+                this.fetchAddressCoordinates();
             } catch (error) {
                 this.notice = error.message;
             } finally {
@@ -327,6 +502,7 @@ window.contactsManager = function () {
             this.form.city = item.city ?? this.form.city;
             this.form.state = (item.state ?? this.form.state).toUpperCase();
             this.addressSuggestions = [];
+            this.fetchAddressCoordinates();
         },
 
         async deleteContact(contactId) {

@@ -49,4 +49,30 @@ class ViaCepService
             })
             ->values();
     }
+
+    public function findByCep(string $cep): array
+    {
+        $baseUrl = rtrim(config('services.viacep.base_url', 'https://viacep.com.br/ws'), '/');
+        $url = sprintf('%s/%s/json/', $baseUrl, rawurlencode($cep));
+
+        $response = Http::retry(2, 100)->get($url);
+
+        if ($response->failed()) {
+            throw new RuntimeException('Não foi possível consultar o CEP no momento.');
+        }
+
+        $payload = $response->json();
+
+        if (empty($payload) || isset($payload['erro'])) {
+            throw new RuntimeException('CEP não encontrado.');
+        }
+
+        return [
+            'cep' => $payload['cep'] ?? null,
+            'street' => $payload['logradouro'] ?? null,
+            'district' => $payload['bairro'] ?? null,
+            'city' => $payload['localidade'] ?? null,
+            'state' => $payload['uf'] ?? null,
+        ];
+    }
 }

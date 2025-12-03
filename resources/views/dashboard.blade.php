@@ -5,7 +5,16 @@
                 <p class="dashboard-kicker">Registro de contatos</p>
                 <h2>Visão geral dos pontos atendidos</h2>
             </div>
-            <span class="dashboard-tag">Últimos dados sincronizados</span>
+            <div class="dashboard-header__actions">
+                <span class="dashboard-tag">Últimos dados sincronizados</span>
+                <x-primary-button
+                    type="button"
+                    x-data=""
+                    x-on:click.prevent="$dispatch('open-modal', 'contact-registration')"
+                >
+                    {{ __('Cadastrar contato') }}
+                </x-primary-button>
+            </div>
         </div>
     </x-slot>
 
@@ -101,5 +110,6 @@
                 <p class="map-placeholder" x-show="mapError && googleMapsKey" x-text="mapError"></p>
             </div>
         </div>
+        <x-dashboard-modal />
     </section>
 </x-app-layout>

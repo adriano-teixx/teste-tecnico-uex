@@ -23,6 +23,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::get('/addresses', AddressSearchController::class)->name('addresses.search');
+    Route::get('/addresses/geocode', [AddressSearchController::class, 'geocode'])
+        ->name('addresses.geocode');
+    Route::get('/addresses/cep', [AddressSearchController::class, 'byCep'])
+        ->name('addresses.cep');
 
     Route::get('/settings/google-maps', [GoogleMapsKeyController::class, 'edit'])
         ->name('settings.google_maps.edit');
