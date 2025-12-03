@@ -92,16 +92,31 @@
                             x-on:click="focusContact(contact)"
                             x-on:keydown.enter.prevent="focusContact(contact)"
                         >
-                            <div class="contact-avatar">
-                                <span x-text="contact.name.charAt(0)"></span>
+                            <div class="contact-content">
+                                <div class="contact-info">
+                                    <h3 x-text="contact.name"></h3>
+                                    <p x-text="contact.subtitle"></p>
+                                </div>
+                                <div class="contact-meta">
+                                    <span class="contact-badge" x-text="contact.contract_label"></span>
+                                    <span class="contact-location" x-text="contact.address.city + ' - ' + contact.address.state"></span>
+                                </div>
                             </div>
-                            <div class="contact-info">
-                                <h3 x-text="contact.name"></h3>
-                                <p x-text="contact.subtitle"></p>
-                            </div>
-                            <div class="contact-meta">
-                                <span class="contact-badge" x-text="contact.contract_label"></span>
-                                <span class="contact-location" x-text="contact.address.city + ' - ' + contact.address.state"></span>
+                            <div class="contact-actions">
+                                <button
+                                    type="button"
+                                    class="contact-action"
+                                    x-on:click.stop.prevent="openEditModal(contact)"
+                                >
+                                    <span class="material-symbols-outlined">edit</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    class="contact-action contact-action--ghost"
+                                    x-on:click.stop.prevent="deleteContact(contact.id)"
+                                >
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
                             </div>
                         </article>
                     </template>

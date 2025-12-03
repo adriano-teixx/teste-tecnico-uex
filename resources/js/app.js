@@ -355,6 +355,11 @@ window.contactsManager = function () {
             }
         },
 
+        openEditModal(contact) {
+            this.startEditing(contact);
+            window.dispatchEvent(new CustomEvent('open-modal', { detail: 'contact-registration' }));
+        },
+
         startEditing(contact) {
             this.editingId = contact.id;
             this.form = {
