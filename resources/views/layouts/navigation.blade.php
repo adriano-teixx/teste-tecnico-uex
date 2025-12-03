@@ -32,6 +32,10 @@
                         {{ __('Profile') }}
                     </x-dropdown-link>
 
+                    <x-dropdown-link :href="route('settings.google_maps.edit')" class="md-dropdown-link">
+                        {{ __('Google Maps Key') }}
+                    </x-dropdown-link>
+
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
 
@@ -62,6 +66,9 @@
         <div class="flex flex-col gap-2">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('settings.google_maps.edit')" :active="request()->routeIs('settings.google_maps.edit')">
+                {{ __('Google Maps Key') }}
             </x-responsive-nav-link>
         </div>
 
