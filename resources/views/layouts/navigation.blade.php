@@ -33,7 +33,7 @@
                     </x-dropdown-link>
 
                     <x-dropdown-link :href="route('settings.google_maps.edit')" class="md-dropdown-link">
-                        {{ __('Google Maps Key') }}
+                        {{ __('Configuração') }}
                     </x-dropdown-link>
 
                     <form method="POST" action="{{ route('logout') }}">
@@ -68,7 +68,7 @@
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('settings.google_maps.edit')" :active="request()->routeIs('settings.google_maps.edit')">
-                {{ __('Google Maps Key') }}
+                {{ __('Configuração') }}
             </x-responsive-nav-link>
         </div>
 

@@ -7,7 +7,7 @@ use App\Http\Requests\StoreContactRequest;
 use App\Http\Requests\UpdateContactRequest;
 use App\Http\Resources\ContactResource;
 use App\Models\Contact;
-use App\Services\GoogleMapsGeocodingService;
+use App\Services\GeocodingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
@@ -43,7 +43,7 @@ class ContactController extends Controller
     /**
      * Store a newly created contact.
      */
-    public function store(StoreContactRequest $request, GoogleMapsGeocodingService $geocoder): JsonResponse
+    public function store(StoreContactRequest $request, GeocodingService $geocoder): JsonResponse
     {
         try {
             $contact = $this->persistContact($request->user(), $request->validated(), $geocoder);
@@ -82,7 +82,7 @@ class ContactController extends Controller
     /**
      * Update the specified contact.
      */
-    public function update(UpdateContactRequest $request, Contact $contact, GoogleMapsGeocodingService $geocoder): JsonResponse
+    public function update(UpdateContactRequest $request, Contact $contact, GeocodingService $geocoder): JsonResponse
     {
         $this->ensureOwnership($request->user()->id, $contact);
 
@@ -114,7 +114,7 @@ class ContactController extends Controller
      *
      * @return \App\Models\Contact
      */
-    protected function persistContact($user, array $validated, GoogleMapsGeocodingService $geocoder): Contact
+    protected function persistContact($user, array $validated, GeocodingService $geocoder): Contact
     {
         $attributes = array_merge($validated, $geocoder->geocode($validated));
 
