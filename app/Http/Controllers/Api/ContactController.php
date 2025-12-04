@@ -29,9 +29,20 @@ class ContactController extends Controller
         $contacts = $request->user()
             ->contacts()
             ->when($request->query('search'), function ($query, $term) {
-                $query->where(function ($query) use ($term) {
-                    $query->where('name', 'like', "%{$term}%")
-                        ->orWhere('cpf', 'like', "%{$term}%");
+                $term = trim($term);
+
+                if ($term === '') {
+                    return;
+                }
+
+                $cpfTerm = preg_replace('/\\D/', '', $term);
+
+                $query->where(function ($query) use ($term, $cpfTerm) {
+                    $query->where('name', 'like', "%{$term}%");
+
+                    if ($cpfTerm !== '') {
+                        $query->orWhere('cpf', 'like', "%{$cpfTerm}%");
+                    }
                 });
             })
             ->orderBy($sort, $direction)

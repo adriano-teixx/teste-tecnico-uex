@@ -12,13 +12,6 @@ window.Alpine = Alpine;
 window.contactsManager = function () {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
     const googleMapsKey = document.querySelector('meta[name="google-maps-api-key"]')?.content ?? '';
-    const contractLabels = {
-        hudsoft: 'HudSoft',
-        ag4: 'AG4',
-        beats: 'Beats',
-        maroto: 'Maroto Bagari',
-    };
-
     const alertService = new AlertService();
     const formatter = new FormatterService();
     const contactApi = new ContactApiService(csrfToken);
@@ -28,7 +21,6 @@ window.contactsManager = function () {
         csrfToken,
         googleMapsKey,
         search: '',
-        contractType: 'all',
         loading: false,
         addressLoading: false,
         addressSuggestions: [],
@@ -40,6 +32,7 @@ window.contactsManager = function () {
         activeMarker: null,
         activeContactId: null,
         mapError: '',
+        mapView: 'roadmap',
         selectedCoordinates: null,
         geocodeLoading: false,
         mockLoading: false,
@@ -173,26 +166,24 @@ window.contactsManager = function () {
                 mapTypeControl: false,
                 streetViewControl: false,
                 fullscreenControl: false,
+                mapTypeId: this.mapView,
             });
 
         },
 
-        resolveContractType(contact) {
-            const name = (contact.name ?? '').toLowerCase();
-
-            if (name.includes('beats')) {
-                return 'beats';
+        setMapView(view) {
+            if (
+                this.mapView === view ||
+                !['roadmap', 'satellite'].includes(view)
+            ) {
+                return;
             }
 
-            if (name.includes('maroto')) {
-                return 'maroto';
-            }
+            this.mapView = view;
 
-            if (name.includes('ag4')) {
-                return 'ag4';
+            if (this.map) {
+                this.map.setMapTypeId(view);
             }
-
-            return 'hudsoft';
         },
 
         focusContact(contact) {
@@ -235,22 +226,14 @@ window.contactsManager = function () {
         },
 
         prepareContact(contact) {
-            const contractType = contact.contract_type ?? this.resolveContractType(contact);
-
             return {
                 ...contact,
-                contract_type: contractType,
-                contract_label: contractLabels[contractType] ?? contractLabels.hudsoft,
-                subtitle: (contact.complement || 'Sem delimitações').trim(),
+                subtitle: (contact.complement ?? '').trim(),
             };
         },
 
         displayedContacts() {
-            if (this.contractType === 'all') {
-                return this.contacts;
-            }
-
-            return this.contacts.filter((contact) => contact.contract_type === this.contractType);
+            return this.contacts;
         },
 
         clearSearch() {

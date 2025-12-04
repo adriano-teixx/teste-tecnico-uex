@@ -3,17 +3,16 @@
         <div class="dashboard-header">
             <div>
                 <p class="dashboard-kicker">Registro de contatos</p>
-                <h2>Visão geral dos pontos atendidos</h2>
+                <h2>Visão geral dos contatos</h2>
             </div>
             <div class="dashboard-header__actions">
-                <span class="dashboard-tag">Últimos dados sincronizados</span>
                 @if (config('features.mock_contacts'))
                     <x-secondary-button
                         type="button"
                         x-data=""
                         x-on:click.prevent="window.dispatchEvent(new CustomEvent('create-mock-contact'))"
                     >
-                        {{ __('Cadastrar contato mock') }}
+                        {{ __('Cadastrar contato simulado') }}
                     </x-secondary-button>
                 @endif
                 <x-primary-button
@@ -37,19 +36,6 @@
         <aside class="contacts-panel">
             <div class="contacts-panel__header">
                 <div class="form-group">
-                    <label for="contract-type">Tipo de Contrato</label>
-                    <div class="select-wrapper">
-                        <select id="contract-type" x-model="contractType" @change="updateMapMarkers()">
-                            <option value="all">Todos</option>
-                            <option value="hudsoft">HudSoft</option>
-                            <option value="ag4">AG4</option>
-                            <option value="beats">Beats</option>
-                            <option value="maroto">Maroto Bagari</option>
-                        </select>
-                        <span class="material-symbols-outlined select-icon">expand_more</span>
-                    </div>
-                </div>
-                <div class="form-group">
                     <label for="search-query">Buscar</label>
                     <div class="search-field">
                         <input
@@ -57,19 +43,8 @@
                             type="text"
                             x-model="search"
                             x-on:input.debounce.500="goToPage(1)"
-                            placeholder="Conta, Unidade"
+                            placeholder="Digite Nome ou CPF"
                         >
-                        <button type="button" class="btn-icon" @click="goToPage(1)" aria-label="Buscar">
-                            <span class="material-symbols-outlined">search</span>
-                        </button>
-                        <button
-                            type="button"
-                            class="btn-icon btn-icon--ghost"
-                            @click="clearSearch()"
-                            aria-label="Limpar busca"
-                        >
-                            <span class="material-symbols-outlined">close</span>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -98,7 +73,6 @@
                                     <p x-text="contact.subtitle"></p>
                                 </div>
                                 <div class="contact-meta">
-                                    <span class="contact-badge" x-text="contact.contract_label"></span>
                                     <span class="contact-location" x-text="contact.address.city + ' - ' + contact.address.state"></span>
                                 </div>
                             </div>
@@ -150,8 +124,28 @@
         <div class="contacts-map">
             <div class="map-toolbar">
                 <div class="map-toolbar__group">
-                    <span class="map-toolbar__tab map-toolbar__tab--active">Map</span>
-                    <span class="map-toolbar__tab">Satellite</span>
+                    <span
+                        class="map-toolbar__tab"
+                        :class="{ 'map-toolbar__tab--active': mapView === 'roadmap' }"
+                        role="button"
+                        tabindex="0"
+                        :aria-pressed="mapView === 'roadmap'"
+                        x-on:click.prevent="setMapView('roadmap')"
+                        x-on:keydown.enter.prevent="setMapView('roadmap')"
+                    >
+                        Mapa
+                    </span>
+                    <span
+                        class="map-toolbar__tab"
+                        :class="{ 'map-toolbar__tab--active': mapView === 'satellite' }"
+                        role="button"
+                        tabindex="0"
+                        :aria-pressed="mapView === 'satellite'"
+                        x-on:click.prevent="setMapView('satellite')"
+                        x-on:keydown.enter.prevent="setMapView('satellite')"
+                    >
+                        Satélite
+                    </span>
                 </div>
                 <button type="button" class="btn-icon btn-icon--ghost" aria-hidden="true">
                     <span class="material-symbols-outlined">fullscreen</span>
