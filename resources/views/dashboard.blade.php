@@ -150,8 +150,28 @@
         <div class="contacts-map">
             <div class="map-toolbar">
                 <div class="map-toolbar__group">
-                    <span class="map-toolbar__tab map-toolbar__tab--active">Map</span>
-                    <span class="map-toolbar__tab">Satellite</span>
+                    <span
+                        class="map-toolbar__tab"
+                        :class="{ 'map-toolbar__tab--active': mapView === 'roadmap' }"
+                        role="button"
+                        tabindex="0"
+                        :aria-pressed="mapView === 'roadmap'"
+                        x-on:click.prevent="setMapView('roadmap')"
+                        x-on:keydown.enter.prevent="setMapView('roadmap')"
+                    >
+                        Map
+                    </span>
+                    <span
+                        class="map-toolbar__tab"
+                        :class="{ 'map-toolbar__tab--active': mapView === 'satellite' }"
+                        role="button"
+                        tabindex="0"
+                        :aria-pressed="mapView === 'satellite'"
+                        x-on:click.prevent="setMapView('satellite')"
+                        x-on:keydown.enter.prevent="setMapView('satellite')"
+                    >
+                        Satellite
+                    </span>
                 </div>
                 <button type="button" class="btn-icon btn-icon--ghost" aria-hidden="true">
                     <span class="material-symbols-outlined">fullscreen</span>

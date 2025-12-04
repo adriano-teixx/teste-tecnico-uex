@@ -40,6 +40,7 @@ window.contactsManager = function () {
         activeMarker: null,
         activeContactId: null,
         mapError: '',
+        mapView: 'roadmap',
         selectedCoordinates: null,
         geocodeLoading: false,
         mockLoading: false,
@@ -173,8 +174,24 @@ window.contactsManager = function () {
                 mapTypeControl: false,
                 streetViewControl: false,
                 fullscreenControl: false,
+                mapTypeId: this.mapView,
             });
 
+        },
+
+        setMapView(view) {
+            if (
+                this.mapView === view ||
+                !['roadmap', 'satellite'].includes(view)
+            ) {
+                return;
+            }
+
+            this.mapView = view;
+
+            if (this.map) {
+                this.map.setMapTypeId(view);
+            }
         },
 
         resolveContractType(contact) {
