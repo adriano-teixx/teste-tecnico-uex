@@ -48,6 +48,10 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        // Regra: apagar a própria conta também deve remover todos os dados cadastrados pelo usuário.
+        $user->contacts()->delete();
+        $user->settings()->delete();
+
         Auth::logout();
 
         $user->delete();

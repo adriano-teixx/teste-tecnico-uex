@@ -7,6 +7,10 @@
         <p class="mt-1 text-sm text-gray-600">
             {{ __('Depois que sua conta for excluída, todos os recursos e dados serão permanentemente removidos. Antes de excluir sua conta, baixe quaisquer dados ou informações que queira manter.') }}
         </p>
+
+        <p class="mt-2 text-sm font-semibold text-red-600">
+            {{ __('Regra: quando você remover sua própria conta, tudo o que foi cadastrado por você será excluído da base de dados.') }}
+        </p>
     </header>
 
     <x-danger-button

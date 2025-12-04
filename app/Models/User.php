@@ -54,4 +54,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Contact::class);
     }
+
+    /**
+     * A user can have many settings.
+     */
+    public function settings(): HasMany
+    {
+        return $this->hasMany(Setting::class);
+    }
 }

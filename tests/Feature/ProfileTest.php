@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Contact;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -76,6 +78,53 @@ class ProfileTest extends TestCase
             ->assertRedirect('/');
 
         $this->assertGuest();
+        $this->assertNull($user->fresh());
+    }
+
+    public function test_contacts_are_removed_when_user_deletes_account(): void
+    {
+        $user = User::factory()->create();
+
+        Contact::factory()->for($user)->create();
+
+        $this->assertDatabaseCount('contacts', 1);
+
+        $response = $this
+            ->actingAs($user)
+            ->delete('/profile', [
+                'password' => 'password',
+            ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect('/');
+
+        $this->assertDatabaseCount('contacts', 0);
+        $this->assertNull($user->fresh());
+    }
+
+    public function test_settings_are_removed_when_user_deletes_account(): void
+    {
+        $user = User::factory()->create();
+
+        Setting::create([
+            'user_id' => $user->id,
+            'key' => 'test_key',
+            'value' => 'value',
+        ]);
+
+        $this->assertDatabaseCount('settings', 1);
+
+        $response = $this
+            ->actingAs($user)
+            ->delete('/profile', [
+                'password' => 'password',
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/');
+
+        $this->assertDatabaseCount('settings', 0);
         $this->assertNull($user->fresh());
     }
 
