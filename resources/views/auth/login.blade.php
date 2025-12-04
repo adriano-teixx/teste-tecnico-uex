@@ -5,7 +5,7 @@
         @csrf
 
         <div class="md-form-field">
-            <x-input-label for="email" :value="__('Email')" />
+            <x-input-label for="email" :value="__('E-mail')" />
             <x-text-input
                 id="email"
                 type="email"
@@ -19,7 +19,7 @@
         </div>
 
         <div class="md-form-field">
-            <x-input-label for="password" :value="__('Password')" />
+            <x-input-label for="password" :value="__('Senha')" />
             <x-text-input
                 id="password"
                 type="password"
@@ -38,15 +38,15 @@
 
             @if (Route::has('password.request'))
                 <a class="md-link text-sm font-semibold" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
+                    {{ __('Esqueceu sua senha?') }}
                 </a>
             @endif
         </div>
 
         <div class="mt-6">
-            <x-primary-button>
-                {{ __('Log in') }}
-            </x-primary-button>
+                <x-primary-button>
+                    {{ __('Entrar') }}
+                </x-primary-button>
         </div>
     </form>
 </x-guest-layout>

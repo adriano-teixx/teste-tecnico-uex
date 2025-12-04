@@ -12,7 +12,7 @@
                         x-data=""
                         x-on:click.prevent="window.dispatchEvent(new CustomEvent('create-mock-contact'))"
                     >
-                        {{ __('Cadastrar contato mock') }}
+                        {{ __('Cadastrar contato simulado') }}
                     </x-secondary-button>
                 @endif
                 <x-primary-button
@@ -133,7 +133,7 @@
                         x-on:click.prevent="setMapView('roadmap')"
                         x-on:keydown.enter.prevent="setMapView('roadmap')"
                     >
-                        Map
+                        Mapa
                     </span>
                     <span
                         class="map-toolbar__tab"
@@ -144,7 +144,7 @@
                         x-on:click.prevent="setMapView('satellite')"
                         x-on:keydown.enter.prevent="setMapView('satellite')"
                     >
-                        Satellite
+                        Satélite
                     </span>
                 </div>
                 <button type="button" class="btn-icon btn-icon--ghost" aria-hidden="true">
