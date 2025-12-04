@@ -12,13 +12,6 @@ window.Alpine = Alpine;
 window.contactsManager = function () {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
     const googleMapsKey = document.querySelector('meta[name="google-maps-api-key"]')?.content ?? '';
-    const contractLabels = {
-        hudsoft: 'HudSoft',
-        ag4: 'AG4',
-        beats: 'Beats',
-        maroto: 'Maroto Bagari',
-    };
-
     const alertService = new AlertService();
     const formatter = new FormatterService();
     const contactApi = new ContactApiService(csrfToken);
@@ -28,7 +21,6 @@ window.contactsManager = function () {
         csrfToken,
         googleMapsKey,
         search: '',
-        contractType: 'all',
         loading: false,
         addressLoading: false,
         addressSuggestions: [],
@@ -194,24 +186,6 @@ window.contactsManager = function () {
             }
         },
 
-        resolveContractType(contact) {
-            const name = (contact.name ?? '').toLowerCase();
-
-            if (name.includes('beats')) {
-                return 'beats';
-            }
-
-            if (name.includes('maroto')) {
-                return 'maroto';
-            }
-
-            if (name.includes('ag4')) {
-                return 'ag4';
-            }
-
-            return 'hudsoft';
-        },
-
         focusContact(contact) {
             if (!this.map) {
                 this.alertService.error('O mapa ainda não está disponível.');
@@ -252,22 +226,14 @@ window.contactsManager = function () {
         },
 
         prepareContact(contact) {
-            const contractType = contact.contract_type ?? this.resolveContractType(contact);
-
             return {
                 ...contact,
-                contract_type: contractType,
-                contract_label: contractLabels[contractType] ?? contractLabels.hudsoft,
-                subtitle: (contact.complement || 'Sem delimitações').trim(),
+                subtitle: (contact.complement ?? '').trim(),
             };
         },
 
         displayedContacts() {
-            if (this.contractType === 'all') {
-                return this.contacts;
-            }
-
-            return this.contacts.filter((contact) => contact.contract_type === this.contractType);
+            return this.contacts;
         },
 
         clearSearch() {
