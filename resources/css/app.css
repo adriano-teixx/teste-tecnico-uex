@@ -1019,6 +1019,43 @@ body {
     color: #0f172a;
 }
 
+.dashboard-map-notice {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(147, 147, 147, 0.25);
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.dashboard-map-notice__content h3 {
+    margin: 0.15rem 0 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.dashboard-map-notice__content p {
+    margin: 0.4rem 0 0;
+    color: rgba(16, 13, 38, 0.6);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.dashboard-map-notice__eyebrow {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #6b46c1;
+}
+
+.dashboard-map-notice__actions {
+    display: flex;
+    align-items: center;
+}
+
 .map-frame {
     position: relative;
     min-height: 560px;

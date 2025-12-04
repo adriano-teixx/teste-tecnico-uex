@@ -9,6 +9,38 @@
     </x-slot>
 
     <section class="settings-page">
+        @if ($needsOnboarding)
+            <div class="settings-onboarding-card">
+                <div>
+                    <p class="settings-onboarding-card__eyebrow">Primeiros passos</p>
+                    <h3>Ajuste as configurações do Google Maps</h3>
+                    <p class="settings-onboarding-card__description">
+                        Ainda não encontramos uma chave ativa ou uma fonte personalizada de geocodificação. Use os passos abaixo para habilitar o mapa no painel.
+                    </p>
+                </div>
+
+                <ol class="settings-onboarding-card__list">
+                    <li>Crie um projeto no Google Cloud Platform e habilite as APIs do Maps JavaScript e Geocodificação.</li>
+                    <li>Gere uma chave de API, aplique restrições recomendadas e copie o valor.</li>
+                    <li>Informe a chave neste painel, escolha o provedor desejado e salve.</li>
+                </ol>
+
+                <div class="settings-onboarding-card__footer">
+                    <p>
+                        Não quer depender do Google? Escolha o OpenStreetMap como fonte e continue usando o recurso sem a chave.
+                    </p>
+                    <a
+                        class="settings-onboarding-card__link"
+                        href="https://developers.google.com/maps/documentation/javascript/get-api-key"
+                        target="_blank"
+                        rel="noreferrer noopener"
+                    >
+                        Saber como gerar uma chave
+                    </a>
+                </div>
+            </div>
+        @endif
+
         <div class="settings-card">
             <p class="settings-card-description">Escolha a fonte das coordenadas e mantenha os endpoints atualizados para o painel.</p>
 

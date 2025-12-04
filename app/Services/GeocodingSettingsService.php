@@ -15,4 +15,9 @@ class GeocodingSettingsService
     {
         return Setting::setValue('geocoding_provider', $provider, $userId);
     }
+
+    public function hasStoredProvider(): bool
+    {
+        return Setting::where('key', 'geocoding_provider')->exists();
+    }
 }

@@ -122,6 +122,26 @@
         </aside>
 
         <div class="contacts-map">
+            @if ($needsGoogleMapsSetup)
+                <div class="dashboard-map-notice">
+                    <div class="dashboard-map-notice__content">
+                        <p class="dashboard-map-notice__eyebrow">Atenção</p>
+                        <h3>Chave do Google Maps não configurada</h3>
+                        <p>
+                            Os mapas do painel precisam de uma chave ativa do Google para exibir os contatos.
+                            Configure o acesso nas configurações e volte para ver o mapa completo.
+                        </p>
+                    </div>
+                    <div class="dashboard-map-notice__actions">
+                        <a
+                            class="btn-secondary"
+                            href="{{ route('settings.google_maps.edit') }}"
+                        >
+                            Configurar Google Maps
+                        </a>
+                    </div>
+                </div>
+            @endif
             <div class="map-toolbar">
                 <div class="map-toolbar__group">
                     <span

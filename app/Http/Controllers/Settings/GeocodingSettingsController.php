@@ -16,6 +16,7 @@ class GeocodingSettingsController extends Controller
         return view('settings.geocoding', [
             'googleMapsKey' => $googleMapsKeyService->getKey(),
             'geocodingProvider' => $settingsService->getProvider(),
+            'needsOnboarding' => !$googleMapsKeyService->hasKey() || !$settingsService->hasStoredProvider(),
         ]);
     }
 

@@ -12,6 +12,10 @@
             <p class="mt-1 text-sm text-gray-600">
                 {{ __('Preencha os dados do ponto de contato. Todos os campos marcados são necessários para que possamos localizar o endereço.') }}
             </p>
+
+            <p class="mt-1 text-sm text-gray-600">
+                {{ __('A plataforma possui um sistema de ajuda para o preenchimento do endereço do contato, onde você pode informar UF, cidade e um trecho do endereço e receber sugestões que já completam os campos automaticamente.') }}
+            </p>
         </header>
 
         <div class="grid gap-4 md:grid-cols-2">

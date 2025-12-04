@@ -15,4 +15,11 @@ class GoogleMapsKeyService
     {
         return Setting::setValue('google_maps_api_key', $key, $userId);
     }
+
+    public function hasKey(): bool
+    {
+        $key = $this->getKey();
+
+        return is_string($key) && trim($key) !== '';
+    }
 }

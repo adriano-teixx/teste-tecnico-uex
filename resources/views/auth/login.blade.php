@@ -1,7 +1,7 @@
 <x-guest-layout>
     <x-auth-session-status class="mb-4 text-sm font-semibold text-emerald-500" :status="session('status')" />
 
-    <form method="POST" action="{{ route('login') }}" class="space-y-6">
+    <form method="POST" action="{{ route('login') }}" class="md-card__form">
         @csrf
 
         <div class="md-form-field">
@@ -30,10 +30,10 @@
             <x-input-error :messages="$errors->get('password')" />
         </div>
 
-        <div class="flex items-center justify-between mt-1">
-            <label for="remember_me" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600">
+        <div class="md-card__remember">
+            <label for="remember_me">
                 <input id="remember_me" type="checkbox" name="remember" class="h-4 w-4 rounded border border-slate-400 text-indigo-600 focus:ring-indigo-500" />
-                <span>{{ __('Remember me') }}</span>
+                <span>{{ __('Lembrar-me') }}</span>
             </label>
 
             @if (Route::has('password.request'))
@@ -43,10 +43,15 @@
             @endif
         </div>
 
-        <div class="mt-6">
-                <x-primary-button>
-                    {{ __('Entrar') }}
-                </x-primary-button>
+        <div class="md-card__submit">
+            <x-primary-button>
+                {{ __('Entrar') }}
+            </x-primary-button>
         </div>
     </form>
+
+    <div class="md-card__actions md-card__actions--stacked">
+        <span class="md-card__description">Ainda não tem conta?</span>
+        <a class="md-card__link" href="{{ route('register') }}">{{ __('Criar nova conta') }}</a>
+    </div>
 </x-guest-layout>
