@@ -39,6 +39,14 @@ return [
         'key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
+    'geocoding' => [
+        'provider' => env('GEOCODING_PROVIDER', 'google'),
+    ],
+
+    'openstreet' => [
+        'base_url' => env('OPENSTREET_BASE_URL', 'https://nominatim.openstreetmap.org/search'),
+    ],
+
     'viacep' => [
         'base_url' => env('VIACEP_BASE_URL', 'https://viacep.com.br/ws'),
     ],

@@ -4,7 +4,7 @@ namespace App\Http\Requests\Settings;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreGoogleMapsKeyRequest extends FormRequest
+class StoreGeocodingSettingsRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -15,6 +15,7 @@ class StoreGoogleMapsKeyRequest extends FormRequest
     {
         return [
             'google_maps_key' => ['nullable', 'string', 'max:255'],
+            'geocoding_provider' => ['required', 'in:google,openstreet'],
         ];
     }
 }

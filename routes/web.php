@@ -4,7 +4,7 @@ use App\Http\Controllers\Api\AddressSearchController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Settings\GoogleMapsKeyController;
+use App\Http\Controllers\Settings\GeocodingSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -29,10 +29,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/addresses/cep', [AddressSearchController::class, 'byCep'])
         ->name('addresses.cep');
 
-    Route::get('/settings/google-maps', [GoogleMapsKeyController::class, 'edit'])
+    Route::get('/settings/google-maps', [GeocodingSettingsController::class, 'edit'])
         ->name('settings.google_maps.edit');
 
-    Route::patch('/settings/google-maps', [GoogleMapsKeyController::class, 'update'])
+    Route::patch('/settings/google-maps', [GeocodingSettingsController::class, 'update'])
         ->name('settings.google_maps.update');
 });
 

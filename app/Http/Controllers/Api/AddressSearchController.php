@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AddressCepRequest;
 use App\Http\Requests\AddressGeocodeRequest;
 use App\Http\Requests\AddressSearchRequest;
-use App\Services\GoogleMapsGeocodingService;
+use App\Services\GeocodingService;
 use App\Services\ViaCepService;
 use Illuminate\Http\JsonResponse;
 use RuntimeException;
@@ -27,7 +27,7 @@ class AddressSearchController extends Controller
         return response()->json(['data' => $results]);
     }
 
-    public function geocode(AddressGeocodeRequest $request, GoogleMapsGeocodingService $geocoder): JsonResponse
+    public function geocode(AddressGeocodeRequest $request, GeocodingService $geocoder): JsonResponse
     {
         try {
             $coordinates = $geocoder->geocode([
